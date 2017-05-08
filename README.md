@@ -20,11 +20,11 @@ Install instructions:
 9. Extract the .dll/.so files from it and place them in <nodeLSL> [this is for Windows 7 or higher, not tested otherwise]
 	...If you wish to compile these yourself, use the instructions from https://github.com/sccn/labstreaminglayer
 10. Test if the dlls and LSLWrapper work together properly. To do so, launch two separate consoles from <nodeLSL> and run these commands (one in each console):
->java uk/ac/lancs/scc/nodeLSL/SenderTestExample
+	java uk/ac/lancs/scc/nodeLSL/SenderTestExample
 
->java uk/ac/lancs/scc/nodeLSL/ReceiveExample
+	java uk/ac/lancs/scc/nodeLSL/ReceiveExample
 
-	...if successful, the receiveExample should receive the data the SendTestExample is sending [Tweak firewall settings if required].	 
+...if successful, the receiveExample should receive the data the SendTestExample is sending [Tweak firewall settings if required].	 
 11. Install node.js from https://nodejs.org/en/download/
 12. Install dependencies. From <nodeLSL> use command (it will pick up package.json in <nodeLSL> and install everything required): npm install
 13. Load the nodeLSLServer using command: 
