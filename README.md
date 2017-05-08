@@ -13,18 +13,22 @@ Install instructions:
 4. Dowload the LSL implementation from https://github.com/sccn/labstreaminglayer
 5. Extract and copy the contents of liblsl-Java/src to <nodeLSL> ...after extraction, new folders <nodeLSL>/edu and <nodeLSL>/examples should exist.
 6. Download and extract this repository ...New folders <nodeLSL>/src, <nodeLSL>/vis should appear.
-7. Compile <nodeLSL>/src/LSLWrapper.java from <nodeLSL> using the command : javac -cp jna-4.2.2.jar edu/ucsd/sccn/LSL.java src/LSLWrapper.java src/ReceiveExample.java src/SenderExample.java src/SenderTestExample.java -d . 
+7. Compile <nodeLSL>/src/LSLWrapper.java from <nodeLSL> using the command : 
+>javac -cp jna-4.2.2.jar edu/ucsd/sccn/LSL.java src/LSLWrapper.java src/ReceiveExample.java src/SenderExample.java src/SenderTestExample.java -d . 
 	...Successful compilation will result in a new <nodeLSL>/uk/ac/lancs/scc/nodeLSL folder with LSLWrapper.class, ReceiveExample.class, SenderTestExample.class and SenderExample.class inside it
 8. From ftp://sccn.ucsd.edu/pub/software/LSL/SDK/ download the lastest java version file (e.g. liblsl-Java-1.11.zip).
 9. Extract the .dll/.so files from it and place them in <nodeLSL> [this is for Windows 7 or higher, not tested otherwise]
 	...If you wish to compile these yourself, use the instructions from https://github.com/sccn/labstreaminglayer
 10. Test if the dlls and LSLWrapper work together properly. To do so, launch two separate consoles from <nodeLSL> and run these commands (one in each console):
-	>java uk/ac/lancs/scc/nodeLSL/SenderTestExample
-	>java uk/ac/lancs/scc/nodeLSL/ReceiveExample
+>java uk/ac/lancs/scc/nodeLSL/SenderTestExample
+
+>java uk/ac/lancs/scc/nodeLSL/ReceiveExample
+
 	...if successful, the receiveExample should receive the data the SendTestExample is sending [Tweak firewall settings if required].	 
 11. Install node.js from https://nodejs.org/en/download/
 12. Install dependencies. From <nodeLSL> use command (it will pick up package.json in <nodeLSL> and install everything required): npm install
-13. Load the nodeLSLServer using command: node nodelslserver.js
+13. Load the nodeLSLServer using command: 
+>node nodelslserver.js
 14. In browser, go to http://localhost:3000 to load the visualizer page
 15. For test purposes, run this command in <nodeLSL>: java uk/ac/lancs/scc/nodeLSL/SendTestExample 
 	...if everything is working fine, the visualizer page will receive some data from nodelslserver and display it
