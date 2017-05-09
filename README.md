@@ -7,7 +7,7 @@ It is, if you:
 - Want to use a LSL-compatible device with node.js
 - Want the implementation which is Java-lite and node-heavy (yet, async and non-blocking)
 - Are a Java beginner/non-expert (some instructions below are written with non-experts in mind)
-- At it's core, nodelslserver uses node-java and a custom LSLWrapper class to port the functionality provided by LSL (the important bits?) and forwards the LSL Stream as json packets over websockets.
+- At it's core, nodelslserver uses node-java and a custom LSLWrapper class to port the functionality provided by LSL (the important bits?) and forwards the LSL Stream as json packets over websockets using promises to allow non-blocking async operation.
 
 ###Install instructions: 
  1. Start with a folder ```<nodeLSL>``` as the root folder.
