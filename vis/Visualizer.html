@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Visualizer 1.0</title>
+	<script src="access.js"></script>
+	
+	<style>
+		.fadeOutSignal{
+			display:inline-block;
+			margin:3px;
+			background: #C0C0C0;
+			padding:5px 3px 3px 3px;
+			border-radius:3px;
+			transition: background .75s ease-in-out;
+			-moz-transition: background .75s ease-in-out;
+			-webkit-transition: background .75s ease-in-out;
+		}
+		.fadeInSignal{
+			display:inline-block;
+			margin:3px;
+			background: #2d2;
+			padding:5px 3px 3px 3px;
+			border-radius:3px;
+			transition: background .75s ease-in-out;
+			-moz-transition: background .75s ease-in-out;
+			-webkit-transition: background .75s ease-in-out;
+		}
+		.fadeOutSignal:hover{
+			background: #ace;
+		}
+	</style>
+</head>
+<body onload="initALL();">
+<div id="debug">
+	<input type="button" onclick="location.reload();" value="Reload"/> 
+	<span id="reload">ERROR</span>
+	<!--input type="button" onclick="doNext();" value="Next" id="next"/-->
+</div>
+<div id="EEGVis" style="text-align:center" >
+	<div id="EEGStatus" style="text-align: left;padding: 10px;width:530px; float:left;">
+		<div id="svgHolder" style="background:#fff;border:0px solid #000;width:520px;clear:both;color:#555;margin:5px 0px 5px 0px;">
+			<object type="image/svg+xml" data="Comm.svg" id="comm" style="height: 120px;padding:5px;border-radius:10px;border:5px solid #c0c0c0;">
+				Something went wrong!
+			</object><br>
+			<canvas id="canvasPlot" width="500" height="320" style="height: 240px; width:500px;padding:5px;border-radius:10px;border:5px solid #c0c0c0;background:#fbfbfb;"></canvas>
+			<!--object type="image/svg+xml" data="EEGPlot.svg" id="eegVis" style="height: 160px; width:500px;padding:5px;border-radius:10px;border:5px solid #c0c0c0;background:#fbfbfb;">
+				<svg width="100" height="100">
+					<circle cx="50" cy="50" r="40" stroke="green" stroke-width="4" fill="yellow" />
+				</svg>
+			</object-->
+		</div>		
+		<div style="background:#eee;clear:both;color:#555;min-height:60px;height:60px;width:500px;padding:8px 5px 8px 5px;border:5px solid #c0c0c0;margin-left:0px;font-family:Courier;font-size:12px;overflow-y:scroll;border-radius:10px;" id="lslSources">
+			<span class="fadeOutSignal"><b>Sources:</b></span>
+		</div>
+		<div style="background:#000;clear:both;color:#fff;min-height:100px;height:100px;width:500px;padding:5px;border:5px solid #c0c0c0;margin:5px 0px 5px 0px;font-family:Courier;font-size:12px;overflow-y:scroll;border-radius:10px;" id="console">
+			No Connection yet
+		</div>
+        <!--div style="background:#eee;clear:both;color:#555;min-height:40px;height:40px;width:500px;padding:8px 5px 8px 5px;border:5px solid #c0c0c0;margin-left:0px;font-family:Courier;font-size:12px;overflow-y:scroll;border-radius:10px;">
+            <p>WS Address: <span id="wsAddress">ws://localhost:1337</span> <input type="button" value="Update" style="font-family:Courier;font-size:14px;" onclick="changeWSAddress();"/></p>
+        </div-->
+	</div>
+	<div id="EEGHead" style="text-align: left;padding: 10px;width:50px; float:left;">
+		<div style="clear:both;">
+			<object type="image/svg+xml" data="EEG.svg" id="qualitysvg" style="width:535px;padding:5px;height:535px;border:5px solid #c0c0c0;margin:5px 0px 0px 0px;font-family:Courier;font-size:12px;overflow-y:scroll;border-radius:10px;">
+				Something went wrong!
+			</object>
+		</div>
+		<div style="background:#eee;clear:both;color:#555;min-height:40px;height:40px;width:535px;padding:8px 5px 8px 5px;border:5px solid #c0c0c0; margin-left:0px; font-family:Courier; font-size:12px; overflow-y:scroll;border-radius:10px;">
+			<p>WS Address: <span id="wsAddress">ws://localhost:1337</span> <input type="button" value="Update" style="font-family:Courier;font-size:14px;" onclick="changeWSAddress();"/></p>
+		</div>
+	</div>	
+</div>
+
+
+</body>
+</html>

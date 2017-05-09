@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="250"
+   height="60"
+   viewBox="0 0 250 60.000001"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="Comm.svg">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="2.3761719"
+     inkscape:cx="108.32834"
+     inkscape:cy="35.632086"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     inkscape:snap-bbox="true"
+     inkscape:object-paths="true"
+     inkscape:snap-intersection-paths="true"
+     inkscape:object-nodes="true"
+     inkscape:snap-midpoints="true"
+     inkscape:snap-object-midpoints="true"
+     inkscape:snap-center="true"
+     inkscape:bbox-paths="true"
+     inkscape:window-width="1366"
+     inkscape:window-height="705"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     units="px"
+     inkscape:bbox-nodes="true"
+     fit-margin-top="5"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="5">
+    <inkscape:grid
+       type="xygrid"
+       id="grid4136"
+       units="mm"
+       spacingx="0.035433071"
+       spacingy="0.035433072"
+       empspacing="1"
+       originx="5.1199105e-016"
+       originy="-2.3070895" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-990.0551)">
+    <ellipse
+       style="fill:#666666;fill-opacity:1"
+       id="circleNIC"
+       cx="32"
+       cy="1020.0551"
+       inkscape:label="#path4134"
+       rx="32"
+       ry="24.692917" />
+    <ellipse
+       cy="1020.0551"
+       cx="32"
+       id="inCirNIC"
+       style="fill:#cccccc;fill-opacity:1"
+       inkscape:label="#circle4136"
+       rx="24"
+       ry="24.692917" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:12.5px;line-height:125%;font-family:Verdana;-inkscape-font-specification:'Verdana, Bold';text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="31.707031"
+       y="1024.5991"
+       id="txtNIC"
+       sodipodi:linespacing="125%"
+       inkscape:label="#text4138"><tspan
+         sodipodi:role="line"
+         id="tspan4140"
+         x="31.707031"
+         y="1024.5991"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:12.5px;line-height:125%;font-family:Verdana;-inkscape-font-specification:'Verdana, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#ffffff">NIC</tspan></text>
+    <path
+       inkscape:connector-curvature="0"
+       style="fill:#cccccc;fill-opacity:1"
+       d="m 67.635968,1001.9519 -10.076172,0.025 0,0.1562 c 5.589683,5.9244 8.70986,9.7573 8.72461,17.9024 -0.0069,8.1735 -3.14109,12.0346 -8.759766,17.9707 l 10.234375,-0.072 c 3.373744,-5.1583 5.534557,-7.0681 6.255859,-13.2793 l 20.232422,0 0,-8 -20.111328,0 c -0.564996,-6.6627 -2.788484,-9.0976 -6.5,-14.7031 z"
+       id="linkBridge"
+       inkscape:label="#path4160"
+       sodipodi:nodetypes="cccccccccccc" />
+    <ellipse
+       cy="1020.0551"
+       cx="124.93925"
+       id="circleBridge"
+       style="fill:#666666;fill-opacity:1"
+       inkscape:label="#circle4180"
+       rx="32"
+       ry="24.692917" />
+    <circle
+       style="fill:#cccccc;fill-opacity:1"
+       id="inCirBridge"
+       cx="124.93925"
+       cy="1020.0551"
+       r="24"
+       inkscape:label="#circle4182" />
+    <text
+       sodipodi:linespacing="125%"
+       id="txtBridge"
+       y="1024.5991"
+       x="104.69694"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:12.5px;line-height:125%;font-family:Verdana;-inkscape-font-specification:'Verdana, Bold';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       xml:space="preserve"
+       inkscape:label="#text4184"><tspan
+         sodipodi:role="line"
+         id="tspan4150"
+         x="104.69694"
+         y="1024.5991">NODE</tspan></text>
+    <path
+       id="linkVis"
+       d="m 160.69673,1001.9519 -10.07617,0.025 0,0.1562 c 5.58968,5.9244 8.70986,9.7573 8.72461,17.9024 -0.007,8.1735 -3.14109,12.0346 -8.75977,17.9707 l 10.23438,-0.072 c 3.37374,-5.1583 5.53455,-7.0681 6.25585,-13.2793 l 20.23243,0 0,-8 -20.11133,0 c -0.565,-6.6627 -2.78849,-9.0976 -6.5,-14.7031 z"
+       style="fill:#cccccc"
+       inkscape:connector-curvature="0"
+       inkscape:label="#path4192"
+       sodipodi:nodetypes="cccccccccccc" />
+    <ellipse
+       style="fill:#666666"
+       id="circleVis"
+       cx="218"
+       cy="1020.0551"
+       inkscape:label="#circle4194"
+       rx="32"
+       ry="24.692917" />
+    <circle
+       r="24"
+       cy="1020.0551"
+       cx="218"
+       id="inCirVis"
+       style="fill:#cccccc"
+       inkscape:label="#circle4196" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:12.5px;line-height:125%;font-family:Verdana;-inkscape-font-specification:'Verdana, Bold';text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="218.15259"
+       y="1024.5991"
+       id="txtVis"
+       sodipodi:linespacing="125%"
+       inkscape:label="#text4198"><tspan
+         sodipodi:role="line"
+         id="tspan4200"
+         x="218.15259"
+         y="1024.5991"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:12.5px;line-height:125%;font-family:Verdana;-inkscape-font-specification:'Verdana, Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#ffffff">VIS</tspan></text>
+  </g>
+</svg>
