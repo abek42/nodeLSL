@@ -40,7 +40,7 @@ LSLNodePlayer:  -RE/-RQ/-RM send the contents of a file once
 LSLNodePlayer:  -LE/-LQ/-LM send the contents of a file till interrupted
 And: -N n -T 0.5 -FILE <FileName>
 **************************************/
-var playerObj = {rl:null,stream:null,isPlayer:false,streamType:lslWrapper.LSL_EEG,loopMode:MODE_RUNONCE,frequency:-1.0,channels:8,dataType:lslWrapper.LSL_TYPE_FLOAT,fName:"FloatSam.txt", fDone:true,timerHnd:null};
+var playerObj = {rl:null,stream:null,isPlayer:false,streamType:lslWrapper.LSL_EEG,loopMode:MODE_RUNONCE,frequency:-1.0,channels:8,dataType:lslWrapper.LSL_TYPE_FLOAT,fName:"FloatSam.txt", fDone:true,timerHnd:null,blipCtr:0};
 var dataBuffer = [];
 
 //------------------------------------------------------//
@@ -250,14 +250,23 @@ function sendData(){//this function transmits the data over the connection
 			playerObj.stream.sendFloatSamplesSync(java.newArray('java.lang.String', dBuf)); //we hope this will work fine
 		}
 		catch(e){
-			console.log("ERR:FATAL",e);
+			console.log("ERR: FATAL",e);
 			console.log(dBuf.length, dBuf);
-			
+			process.exit();			
 		}
 	}
 	else{
 		playerObj.stream.sendSampleSync(dBuf); //we hope this will work fine
 	}
+	var blipsPerSecond=Math.floor(playerObj.frequency);
+	if(playerObj.frequency<1){
+		blipsPerSecond = 1; //every blip is logged
+	}
+	if(playerObj.blipCtr%blipsPerSecond==0){
+		console.log("INFO: ",lslWrapper.getStreamNameSync(playerObj.streamType),dBuf.join(","));
+		playerObj.blipCtr = 0;
+	}
+	playerObj.blipCtr++;
 	
 }
 
