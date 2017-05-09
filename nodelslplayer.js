@@ -140,7 +140,7 @@ function showHelpText(){
 	console.log("\t\t-SE or -SQ or -SM: Send 100 seconds worth samples");		
 	console.log("\t\t-CE or -CQ or -CM: Send samples till interrupted");		
 	console.log("\t\t-RE or -RQ or -RM: Send the contents of a file once, file needed with -FNAME <filename>");
-	console.log("\t\t-LE or -LQ or -LM: Send the contents of a file till interrupted, file needed with -FNAME <filename>");    
+	console.log("\t\t-LE or -LQ or -LM: Send the contents of a file till interrupted, file needed with -FILE <filename>");    
 	console.log("\t\t\tE = EEG, Q = Qualit and M = Markers");
 	console.log("In addition to the following:");
 	console.log("\t\t-N <numCh>: Number of channels (+ve integer)");
