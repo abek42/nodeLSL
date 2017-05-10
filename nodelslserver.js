@@ -22,7 +22,7 @@ var BLIPINTERVAL = 5000;
 var wsStatus = {externalIP:false, browserClients:[], noHTTP:false};
 var recorderObj = {fileOpen:[], writeable:[], dataBuffer:[], wstream:[], waitAsync:[], record:[], written:0, lastWriteCnt:0};
 
-var itrCntr = 0; 
+var itrCntr = [0,0,0]; 
 var abortN = false;	//if true, the inlet stream is turned off after reading a few samples, should be false for actual usage
 var streamStatus = []; //maintains a list of objects that hold the references to the inlet streams and other details of the streams
 var tcpStatus = {source:"None",lastMsgTimestamp:Date.now(),status:"undefined",handshakePingAt:0, ticker:false, timerHnd:null, clientHnd:null, wait:Date.now(), connError:false};
@@ -104,7 +104,7 @@ function processArgs(val){
 	}
 	
 	switch(val2){
-		case "REEG"://record incoming streams to separate files
+		case "RE"://record incoming streams to separate files
 			recorderObj.record[lslWrapper.LSL_EEG] =true; 
 			openRecorder(lslWrapper.LSL_EEG);
 			return false; break;
@@ -112,7 +112,7 @@ function processArgs(val){
 			recorderObj.record[lslWrapper.LSL_QUALITY] =true; 
 			openRecorder(lslWrapper.LSL_QUALITY);		
 			return false; break;
-		case "RMARK"://record incoming streams to separate files
+		case "RM"://record incoming streams to separate files
 			recorderObj.record[lslWrapper.LSL_MARKERS] =true;		 
 			openRecorder(lslWrapper.LSL_MARKERS);
 			return false; break;
@@ -138,9 +138,9 @@ function processArgs(val){
 
 function showValidOptions(){
 	console.log("INFO: Valid command options are:");
-	console.log("\t-REEG : Record incoming EEG stream to new file.");		
+	console.log("\t-RE : Record incoming EEG stream to new file.");		
 	console.log("\t-RQ : Record incoming Quality stream to new file.");		
-	console.log("\t-RMARK : Record incoming Marker stream to new file.");
+	console.log("\t-RM : Record incoming Marker stream to new file.");
 	console.log("\t-X : Allow remote connection requests. [Not advised]");      
 	console.log("\t-NOHTTP: Disable HTTP server serving the visualiser page on port "+ HTTPPORT);
 	console.log("\t-HELP: Show this message");
@@ -428,12 +428,21 @@ function readSamples(streamType, dataType){
 
 function processSample(data){//log, record, broadcast, decide closure
 	//log
-	var str = data.sample.join(", ");
-	if(itrCntr%250==0 && streamStatus[data.streamType].sourceName=="EEG") //log to console periodically only, to prevent scroll-bluring of content
-		console.log("INFO:",itrCntr,"...",streamStatus[data.streamType].sourceName,str);
-	if(itrCntr%2==0 && streamStatus[data.streamType].sourceName=="Quality") //log to console periodically only, to prevent scroll-bluring of content
-		console.log("INFO:",itrCntr,"...",streamStatus[data.streamType].sourceName,str);
-	
+	var logCheck = {"div":1,"idx":-1,"str":""};//str = data.sample.join(", ");
+	switch(streamStatus[data.streamType].sourceName){
+		case "EEG":
+			logCheck.div = 250; logCheck.idx = 0; break;
+		case "Markers":
+			logCheck.div = 1;   logCheck.idx = 2; break;
+		case "Quality":
+			logCheck.div = 2;   logCheck.idx = 1; break;
+		default:
+			console.log("Unknown stream type:",streamStatus[data.streamType].sourceName);
+	}
+	if(itrCntr[logCheck.idx]%logCheck.div==0){//avoid blur scroll
+		console.log("INFO:",streamStatus[data.streamType].sourceName,"->",itrCntr[logCheck.idx],"->","[",data.sample.join(", "),"]");
+	}
+	itrCntr[logCheck.idx]++;
 	//record 
 	if(recorderObj.record[data.streamType]) //if the record flag is set, write to file
 		recordData(data);
@@ -442,8 +451,7 @@ function processSample(data){//log, record, broadcast, decide closure
 	broadCast(data); //send it to the connected WS clients
 	
 	//decide closure, in case we just want to verify operation, once closed, restart is required
-	itrCntr++;
-	if(itrCntr>5000 && abortN){//set abortN to false and inlet stream is never closed till application is alive
+	if(itrCntr[logCheck.idx]>5000 && abortN){//set abortN to false and inlet stream is never closed till application is alive
 		streamStatus[data.streamType].continueStream = false;
 		console.log("INFO: Closing", data.streamType, lslWrapper.getStreamNameSync(data.streamType));
 		console.log("INFO: Restart the Node app to resume inlet stream read");

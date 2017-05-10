@@ -19,7 +19,7 @@ const readline = require('readline');
 var timerOn = false;
 var hndTCPSocket;
 var hndTimer;
-
+const ONESHOT_DURATION_MS = 10000.0;
 const MODE_LOOP = "LOOP";
 const MODE_RUNONCE = "ONESHOT";
 const TYPE_EEG = "E";
@@ -53,7 +53,13 @@ function init(){//processes command line params
 	//construct stream name
 	openOutletStream();
 	if(playerObj.frequency>0){
-		playerObj.timerHnd = setInterval(sendData,1000.0/playerObj.frequency,"streamData");
+		playerObj.timerHnd = setInterval(function(){
+			if((!playerObj.isPlayer) &&(playerObj.loopMode==MODE_RUNONCE) && (Date.now()-playerObj.startAt>ONESHOT_DURATION_MS)){
+				console.log("INFO: Run completed. Restart player if more streaming is needed");
+				process.exit();
+			}
+			sendData();
+		},1000.0/playerObj.frequency,"streamData");
 	}
 	else{
 		playerObj.timerHnd = setTimeout(randomData,Math.random()*500,"blipData");
@@ -68,10 +74,17 @@ function init(){//processes command line params
     }
 }
 
-function randomData(){
+function randomData(){//reschedule the process with a random delay between 50-5000 ms 
 	sendData();
-	playerObj.timerHnd = setTimeout(randomData,Math.random()*500,"blipData");
-	console.log("blip");
+	if((!playerObj.isPlayer) &&(playerObj.loopMode==MODE_RUNONCE) && (Date.now()-playerObj.startAt>ONESHOT_DURATION_MS) ){
+		console.log("INFO: Run completed. Restart player if more streaming is needed");
+		process.exit();
+	}
+	/*else{
+		console.log(Date.now()-playerObj.startAt,ONESHOT_DURATION_MS);
+	}*/
+	playerObj.timerHnd = setTimeout(randomData,Math.random()*5000+50,"blipData");
+	//console.log("blip");
 }
 
 function openOutletStream(){
@@ -140,7 +153,7 @@ function showHelpText(){
 	console.log("\t\t-SE or -SQ or -SM: Send 100 seconds worth samples");		
 	console.log("\t\t-CE or -CQ or -CM: Send samples till interrupted");		
 	console.log("\t\t-RE or -RQ or -RM: Send the contents of a file once, file needed with -FNAME <filename>");
-	console.log("\t\t-LE or -LQ or -LM: Send the contents of a file till interrupted, file needed with -FILE <filename>");    
+	console.log("\t\t-LE or -LQ or -LM: Send the contents of a file till interrupted, file needed with -FNAME <filename>");    
 	console.log("\t\t\tE = EEG, Q = Qualit and M = Markers");
 	console.log("In addition to the following:");
 	console.log("\t\t-N <numCh>: Number of channels (+ve integer)");
@@ -151,8 +164,9 @@ function showHelpText(){
 function setPlayerMode(isPlayer,loopMode,valx,needFileFlag){
 	playerObj.isPlayer = isPlayer;
 	playerObj.loopMode = loopMode;
+	playerObj.startAt  = Date.now();
 	//determine stream type
-	if(setStreamType(valx)==TYPE_INVALID){
+	if(setStreamType(valx)==TYPE_INVALID){//it also sets the stream type
 		console.log("ERR: Invalid stream type. Expected", TYPE_EEG, "or",TYPE_QUALITY, "or",TYPE_MARKERS, ". Got '",val.substr(1,1),"'");
 		return false; //invalid type
 	}
@@ -167,7 +181,7 @@ function setStreamType(valx){
 			retVal = TYPE_EEG;
 			break;
 		case TYPE_MARKERS:
-			playerObj.streamType = lslWrapper.LSL_MARKER;
+			playerObj.streamType = lslWrapper.LSL_MARKERS;
 			playerObj.dataType = lslWrapper.LSL_TYPE_STRING;
 			retVal = TYPE_MARKERS;
 			break;
@@ -199,8 +213,8 @@ var increasing=true;
 function sendData(){//this function transmits the data over the connection
 	var dBuf=[];
 	if(!playerObj.isPlayer){//serving random data		
-		for(var i=0;i<playerObj.channels;i++){
-			dBuf[i]= playerObj.dataType==lslWrapper.LSL_TYPE_FLOAT?getFloat():getString();
+		for(var i=0;i<playerObj.channels;i++){//since we can't pass float arrays properly, we send an array of floats stored as strings
+			dBuf[i]= playerObj.dataType==lslWrapper.LSL_TYPE_FLOAT?""+getFloat():getString();
 		}
 	}
 	else{//serving data from file
@@ -272,13 +286,13 @@ function sendData(){//this function transmits the data over the connection
 
 function getFloat() {//more tbd here
 	if(playerObj.streamType==lslWrapper.LSL_EEG)
-		return Math.random()*10000-5000.0;
+		return Math.random()*20000-10000.0;
 	else
 		return Math.random();
 }
 
 function getString(){//more tbd here
-	return "A";	
+	return String.fromCharCode(97 + parseInt(Math.random()*26));
 }
 
 
@@ -295,7 +309,7 @@ function processArgs(){
 			continue;
 		}
 		val = stripPrefix(args[i]);
-		console.log("Arg:",val);
+		//console.log("Arg:",val);
 		switch(val.toUpperCase()){
 			case 'SM':
 			case 'SE':
