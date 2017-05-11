@@ -9,8 +9,9 @@ It is, if you:
 - Are a Java beginner/non-expert (some instructions below are written with non-experts in mind)
 - At its core, nodelslserver uses node-java and a custom LSLWrapper class to port the functionality provided by LSL (the important bits?) and forwards the LSL Stream as json packets over websockets using promises to allow non-blocking async operation.
 
-###Install instructions: 
-See IntallStep.txt
+###Install instructions:
+
+See IntallStep.md
 
 ###Usage
 1.  ```nodelslserver.js``` : Accepts command line arguments, run with ```-help``` flag for more details. It can record an incoming stream for later reuse by ```nodelslplayer.js``` 
