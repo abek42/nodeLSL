@@ -33,6 +33,7 @@ function WebSocketInit(hnd){
 		if(hndWS.lastStatus==null){
 			setCommStatus("WSDisconnect");
 		}
+		
 		// Let us open a web socket
 			//setCommStatus("WSConnRequest");
 			try{
@@ -83,6 +84,7 @@ function WebSocketInit(hnd){
 }
 
 function initALL(){
+	checkForRemoteHost(); //check if this page loaded on a remote browser. If so, websocket address needs updating
 	WebSocketInit(hndWS);// initialize the websocket connection
 	hndWS.send = function(data){//wrap the send command
 		switch(hndWS.handle.readyState){
@@ -593,4 +595,13 @@ function validateIpAndPort(input) {
 function validateNum(input, min, max) {
     var num = +input;
     return num >= min && num <= max && input === num.toString();
+}
+
+function checkForRemoteHost(){
+	if(window.location.href.toLowerCase().indexOf("localhost")>0) return; //connected to localhost so websockets to localhost too.
+	//apparently we are on a remotely hosted page.
+	var newWSAddress = "ws:"+(window.location.href.split(":")[1]+":1337/");
+	hndWS.wsAddress = newWSAddress;
+	document.getElementById("wsAddress").innerHTML = hndWS.wsAddress;
+	console.log("INFO: Updated WS Address to Remote:",newWSAddress);
 }
