@@ -1,31 +1,36 @@
 {
-  "name": "nodelslserver.js",
+  "name": "nodelslserver",
   "version": "1.0.0",
   "description": "Node Bridge for LabStreamingLayer",
   "main": "init",
-  "directories": {
-    "vis": "vis"
-  },
   "dependencies": {
     "express": "^4.15.2",
     "java": "^0.8.0",
-    "path": "^0.12.7",
-    "readline": "^1.3.0",
-    "websocket": "^1.0.24",
-    "util": "^0.10.3"
+    "websocket": "^1.0.24"
   },
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abek42/nodeLSL.git"
+  },
   "keywords": [
+    "nodeLSL",
+    "labstreaminglayer",
+    "lsl",
+    "enobio",
+    "javascript",
     "LSL",
-    "Websockets",
-    "Promises",
-    "Visualizer",
-    "ENOBIO",
-    "LabStreamingLayer"
+    "promises",
+    "visualizer",
+    "eeg"
   ],
   "author": "Abe Karnik",
-  "license": "ISC"
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/abek42/nodeLSL/issues"
+  },
+  "homepage": "https://github.com/abek42/nodeLSL#readme"
 }
