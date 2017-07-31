@@ -10,15 +10,19 @@ public class LSLWrapper {
 	public static final String LSL_TYPE_FLOAT = "Float";
 	public static final String LSL_TYPE_STRING = "String";
 
-	//receiver related variables, their usage is wrapped
+	//receiver related variables which can operate as static variables
 	private static String[] namedStream;	//these are the 'types' used by LSL.resolve_stream for the supported stream types
 	
+	//per inlet stream object, these variables are required, we can't go static since the Java->Node wrapper doesn't support Async calls to Static methods
 	private LSL.StreamInlet inlet_Stream; //this holds the reference to the receiver stream
 	private boolean inStreamInit; //this holds the state of initialization
 	private int inletStreamType;
 	private String inletInitMsg;
 	private String inletSourceId;
+	private String sampleString[];
+	private float sampleFloat[];
 	
+	//outlet stream is not leaky, so we leave implementation in place
 	private static boolean outStreamInit[];
 	private static ThreadedSender[] outlet_Streams;
 	
@@ -26,22 +30,27 @@ public class LSLWrapper {
 	private LSL.StreamInfo 	 outlet_StreamInfo;
 	private String outlet_DataType;
 	private LSL.StreamOutlet outlet_Stream; //this is the handle to the sender stream
-	
+	private static float floatStreamML[];
+	private static String stringStreamML[];
 	//error status return values
 	private static final float[] errFloats = {-1,-1,-1,-1,-1,-1,-1,-1};
 	
 	static{		
 		outStreamInit = new boolean[3];
 		outlet_Streams = new ThreadedSender[3];
+		floatStreamML = new float[8];
+		stringStreamML = new String[8];
+		
 		
 		namedStream = new String[3];
 		namedStream[LSL_MARKERS] = "Markers";
 		namedStream[LSL_EEG] 	= "EEG";
 		namedStream[LSL_QUALITY] = "Quality";
+		
 	}
 	
 	public LSLWrapper(){//create an object with the intention to use it as an inlet stream
-		inletStreamType = LSL_MARKERS; //default init
+		inletStreamType = LSL_MARKERS; //default init as marker stream
 		isOutletStream = false;
 	}
 	
@@ -93,21 +102,21 @@ public class LSLWrapper {
 		}		
 	}
 	
-	private void modeCheck(boolean outletFnCall){
-		if(outletFnCall&&isOutletStream){
+	private static void modeCheck(boolean outletFnCall, boolean streamMode){
+		if(outletFnCall&&streamMode){
 			return; //alright
 		}
-		if((!outletFnCall)&&(!isOutletStream)){
+		if((!outletFnCall)&&(!streamMode)){
 			return;
 		}
 		//if here, mixed call
 		String errOutMode = "ERR: Inlet-related function called by an outlet object";
 		String errInMode  = "ERR: Outlet-related function called by an inlet object";
-		System.err.println(isOutletStream?errOutMode:errInMode);
+		System.err.println(streamMode?errOutMode:errInMode);
 		System.exit(0);
 	}
 	
-	private boolean validStreamDataType(String dataType){
+	private static boolean validStreamDataType(String dataType){
 		switch(dataType){
 			case LSL_TYPE_FLOAT:
 			case LSL_TYPE_STRING:
@@ -117,7 +126,7 @@ public class LSLWrapper {
 		}
 	}
 	
-	private boolean validStreamType(int streamType){
+	private static boolean validStreamType(int streamType){
 		switch(streamType){//check if valid type
 			case LSL_MARKERS:
 			case LSL_EEG:
@@ -127,7 +136,22 @@ public class LSLWrapper {
 				return false;
 		}				
 	}
-
+	
+	private void  initializeSampleArray(String streamDataType, int channelCnt){
+		switch(streamDataType){
+			case LSL_TYPE_FLOAT:
+				sampleFloat = new float[channelCnt];
+				break;
+			case LSL_TYPE_STRING:
+				sampleString = new String[channelCnt];
+				break;
+			default:
+				System.out.println("ERR: Unknown Data Type");
+				System.exit(0);
+		}		
+	}
+	
+	
 	public static String getStreamName(int type){
 		switch(type){
 			case LSL_MARKERS:
@@ -164,7 +188,7 @@ public class LSLWrapper {
 *********************************************************************************/
 	
 	public String openInletStream(int streamType){//initialize a single reciever
-		modeCheck(false);
+		modeCheck(false,isOutletStream);
 		if(inStreamInit){//check if already inited
 			System.out.println("WARN: Stream["+namedStream[streamType]+"] already initialized.");
 			return "WARN: Stream["+namedStream[streamType]+"] already initialized.";
@@ -186,6 +210,7 @@ public class LSLWrapper {
 			inlet_Stream = new LSL.StreamInlet(results[0]); //<-- We expect a single stream on the network. If more are present, edit this code to find more.
 			inStreamInit = true;
 			inletSourceId = results[0].source_id();
+			initializeSampleArray(getStreamDataType(streamType),inlet_Stream.info().channel_count());
 			//System.err.println("DEBUG: Init"+ namedStream[streamType]);
 			return "INFO: Initialized " + namedStream[streamType];
 		}
@@ -201,7 +226,7 @@ public class LSLWrapper {
 	}
 	
 	public String closeInletStream(){
-		modeCheck(false);
+		modeCheck(false,isOutletStream);
 		if(inStreamInit){//already init
 			inlet_Stream.close();
 			inStreamInit = false;
@@ -213,7 +238,7 @@ public class LSLWrapper {
 	}
 	
 	public float[] readFloatStream(){//read a stream as floats.
-		modeCheck(false);
+		modeCheck(false,isOutletStream);
 		if(getStreamDataType(inletStreamType)!=LSL_TYPE_FLOAT){//cant read floats from a string stream
 			System.err.println("ERR: Cannot read floats from a string stream. Use readStringStream instead");
 			return errFloats;
@@ -228,7 +253,7 @@ public class LSLWrapper {
 	}
 	
 	public String[] readStringStream(){//read a stream as strings
-		modeCheck(false);
+		modeCheck(false,isOutletStream);
 		if(getStreamDataType(inletStreamType)!=LSL_TYPE_STRING){//cant read floats from a string stream
 			String err[] = new String[1];
 			err[0] ="ERR: Cannot read strings from a float stream. Use readFloatStream or readStringStreamExt instead";
@@ -246,13 +271,13 @@ public class LSLWrapper {
 	}
 	
 	public String[] readStringStreamExt(){//read a stream as strings even if it is actually a float stream
-		modeCheck(false);
+		modeCheck(false,isOutletStream);
 		if(!inStreamInit){
 			System.err.println("ERR: Initialize stream first using openInletStream");
 			return parseToString(errFloats);
 		}
 		
-		if(getStreamDataType(inletStreamType)==LSL_TYPE_FLOAT){//cant read floats from a string stream
+		if(getStreamDataType(inletStreamType)==LSL_TYPE_FLOAT){//read a float stream and convert to string array
 			return parseToString(readFloats(inlet_Stream));		
 		}
 		else{
@@ -275,11 +300,10 @@ public class LSLWrapper {
 		return arrStr;
 	}
 	
-	private static float[] readFloats(LSL.StreamInlet inlet){
+	private float[] readFloats(LSL.StreamInlet inlet){
 		try{
-			float[] samples = new float[inlet.info().channel_count()]; //one 'record'
-			inlet.pull_sample(samples);
-			return samples;
+			inlet.pull_sample(sampleFloat);
+			return sampleFloat;
 		}
 		catch(Exception e){
 				System.out.println("ERR: Error in LSL read stream");
@@ -288,11 +312,10 @@ public class LSLWrapper {
 		}
 	}
 	
-	private static String[] readString(LSL.StreamInlet inlet){
+	private String[] readString(LSL.StreamInlet inlet){
 		try{
-			String[] sample = new String[1];
-			inlet.pull_sample(sample);
-			return sample;
+			inlet.pull_sample(sampleString);
+			return sampleString;
 		}
 		catch(Exception e){
 				System.out.println("ERR: Error in LSL read stream");
@@ -307,7 +330,7 @@ public class LSLWrapper {
 
 *********************************************************************************/
 	public void sendSample(String[] samples){
-		modeCheck(true);
+		modeCheck(true,isOutletStream);
 		//System.out.println("INFO: Outputting sample string");
 		if(outlet_DataType!=LSL_TYPE_STRING){
 			System.err.println("ERR: Stream doesn't support string data type");
@@ -317,7 +340,7 @@ public class LSLWrapper {
 	}
 	
 	public void sendFloatSamples(String[] samples){//this is required since the node-java wrapper cannot handle arrays gracefully
-		modeCheck(true);
+		modeCheck(true,isOutletStream);
 		if(outlet_DataType!=LSL_TYPE_FLOAT){
 			System.err.println("ERR: Stream doesn't support float data type. Current data type is: "+ outlet_DataType);
 			return;
@@ -330,7 +353,7 @@ public class LSLWrapper {
 	}
 	
 	public void sendSample(float[] samples){
-		modeCheck(true);
+		modeCheck(true,isOutletStream);
 		//System.out.println("INFO: Outputting sample float");
 		if(outlet_DataType!=LSL_TYPE_FLOAT){
 			System.err.println("ERR: Stream doesn't support float data type. Current data type is: "+ outlet_DataType);
@@ -340,7 +363,7 @@ public class LSLWrapper {
 	}
 	
 	public void closeOutletStream(){
-		modeCheck(true);
+		modeCheck(true,isOutletStream);
 		outlet_Stream.close();
 		outlet_StreamInfo.destroy();
 	}
