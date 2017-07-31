@@ -3,9 +3,11 @@ const net = require('net');
 const WebSocketServer = require('websocket').server;
 const http = require('http');
 const express = require('express');
+const events = require('events');
 const util= require('util');
 const os = require('os');
 
+var eventEmitter = new events.EventEmitter();
 var java = require('java');
 java.asyncOptions = {
   asyncSuffix: "Async",     // Don't generate node-style methods taking callbacks
@@ -14,7 +16,7 @@ java.asyncOptions = {
 
 const path = require('path');
 java.classpath.push(path.resolve(__dirname),"examples");
-var lslWrapper = java.import('uk.ac.lancs.scc.nodeLSL.LSLWrapper');
+var lslWrapper = java.import('uk.ac.lancs.scc.nodeLSL.LSLWrapper'); //for all static calls
 var except = java.import('java.io.IOException');
 
 var HTTPPORT = 3000;
@@ -24,6 +26,7 @@ var wsStatus = {externalIP:false, browserClients:[], noHTTP:false};
 var recorderObj = {fileOpen:[], writeable:[], dataBuffer:[], wstream:[], waitAsync:[], record:[], written:0, lastWriteCnt:0};
 
 var itrCntr = [0,0,0]; 
+var verboseLog = false; //default is off
 var abortN = false;	//if true, the inlet stream is turned off after reading a few samples, should be false for actual usage
 var streamStatus = []; //maintains a list of objects that hold the references to the inlet streams and other details of the streams
 var tcpStatus = {source:"None",lastMsgTimestamp:Date.now(),status:"undefined",handshakePingAt:0, ticker:false, timerHnd:null, clientHnd:null, wait:Date.now(), connError:false};
@@ -33,6 +36,7 @@ init();
 function init(){//start both  ends of the bridge
 	//process the command line arguments first
 	var invalidFlag=false;
+	var skipNext = {skip:false, flag:""};
 	initRecorderState();
 	
 	process.argv.forEach(function(val, index){ 
@@ -42,7 +46,7 @@ function init(){//start both  ends of the bridge
 				//do nothing
 				break;
 			default: //for all other indices process
-				invalidFlag |= processArgs(val.toUpperCase());// once true, always true				
+				invalidFlag |= processArgs(val.toUpperCase(),skipNext);// once true, always true				
 		}				   
 	});
 	
@@ -55,7 +59,7 @@ function init(){//start both  ends of the bridge
 	var recordStr = recorderObj.record[lslWrapper.LSL_EEG]?"EEG ":"" +recorderObj.record[lslWrapper.LSL_QUALITY]?"Quality ":"" + recorderObj.record[lslWrapper.LSL_MARKERS]?"Markers":""; 
 	console.log("INFO: Recording: ", recordStr.length>0?recordStr:"None");
 	console.log("INFO: RemoteRequests:" + (wsStatus.externalIP?"A":"Disa")+"llow");
-	  
+	console.log("INFO: Verbose logging is ", verboseLog?"ON":"OFF. Turn on using -V or -VERBOSE flag");  
 	wsInit();
 	//TCPHandshakeInit(); 
 	if(!wsStatus.noHTTP){
@@ -91,17 +95,11 @@ function initRecorderState(){
 	recorderObj.waitAsync[lslWrapper.LSL_MARKERS] =true;
 }
 
-function processArgs(val){
-	var val2 = val.toUpperCase();
-	//strip modifier prefixes
-	while(val2.indexOf("-")==0){
-		val2 = val2.substr(1,val2.length);
-	}
-	while(val2.indexOf("/")==0){
-		val2 = val2.substr(1,val2.length);
-	}
-	while(val2.indexOf("\\")==0){
-		val2 = val2.substr(1,val2.length);
+function processArgs(val, skipNext){
+	var val2 = stripPrefixes(val.toUpperCase());
+	var valN = val2; //copy if skip applies
+	if(skipNext.skip){
+		val2 = skipNext.flag; //use the flag
 	}
 	
 	switch(val2){
@@ -127,6 +125,26 @@ function processArgs(val){
 			showValidOptions();
 			process.exit();
 			break;
+		case "WS": //change Websocket port
+			if(!skipNext.skip){//first encounter
+				skipNext.skip = true; //set it to skip next arg
+				skipNext.flag = val2; //save it for next run
+			}
+			else{//second encounter
+				skipNext.skip = false; //reset for next run
+				if(validateNum(valN, 1, 65535)){
+					WSPORT = valN;
+				}
+				else{//throw error
+					console.log("ERROR: Invalid WebSocket Port Number. Expected values [1,65535]. Got: "+valN);
+					process.exit();
+				}
+			}
+			return false; break;
+		case "VERBOSE": //dump EEG packets at periodic intervals
+		case "V":
+			verboseLog = true;
+			return false; break;
 		case "NOHTTP"://no visualizer page being served on localhost:PORT
 			wsStatus.noHTTP=true; 
 			return false; break;
@@ -138,12 +156,28 @@ function processArgs(val){
 	return true; //if here, no valid flag found
 }
 
+function stripPrefixes(val){
+	//strip modifier prefixes
+	var val2 = val;
+	while(val2.indexOf("-")==0){
+		val2 = val2.substr(1,val2.length);
+	}
+	while(val2.indexOf("/")==0){
+		val2 = val2.substr(1,val2.length);
+	}
+	while(val2.indexOf("\\")==0){
+		val2 = val2.substr(1,val2.length);
+	}
+	return val2;
+}
+
 function showValidOptions(){
 	console.log("INFO: Valid command options are:");
 	console.log("\t-RE : Record incoming EEG stream to new file.");		
 	console.log("\t-RQ : Record incoming Quality stream to new file.");		
 	console.log("\t-RM : Record incoming Marker stream to new file.");
 	console.log("\t-X : Allow remote connection requests. [Not advised]");      
+	console.log("\t-WS <PortID> : Change WebSocket port to provided value [1,65535]");      
 	console.log("\t-NOHTTP: Disable HTTP server serving the visualiser page on port "+ HTTPPORT);
 	console.log("\t-HELP: Show this message");
 }
@@ -345,7 +379,9 @@ function openStream(streamType){//call this function to open a new stream and se
 	function(data) {
 		console.log("INFO: LSL Inlet stream found and connected to: ", data.strName);		
 		streamStatus[data.type] = {"obj":data.obj,"started":true,"continueStream":true, "sourceId":data.obj.getInletSourceIdSync(), "sourceName":data.obj.getInletSourceIdSync(),"sourceName":data.strName};//save status
-		readSamples(streamType,"");//start reading samples off it
+		samplerArray.push({"streamType":streamType,"dataType":""});
+		console.log("DEBUG: sa Length", samplerArray.length );
+		readSamplesEvent(samplerArray.length-1);//start reading samples off it
 	}, 
 	function(error) {
 		console.log('ERR: Failed to initialize stream');
@@ -360,16 +396,99 @@ function openStream(streamType){//call this function to open a new stream and se
 }
 
 //chained promises for a similar repeated activity
-//this function is recursively called by each openStream result through a promise chaining approach
-//the breakout code is in processSample and exit is disabled while abortN = false.
+//recursive promises leak memory, so we add an additional event emittor to restart recursion every 250 calls.
+var samplerCallCnt = 0;
+function onContinueEvent(data){
+	readSamplesEvent(data);
+}
+
+eventEmitter.on("continueSampling",function(data){
+	//console.log("DEBUG: Restart event", data.dataType, data.streamType);
+	onContinueEvent(data);	
+});
+
+eventEmitter.on("readError",function(data){
+	console.log("ERR:", data);
+	console.log("ERR: Aborting...");
+	process.exit();
+});
+
+var samplerArray = [];
+
+function readSamplesEvent(index){
+	//console.log(samplerArray[index]);
+	var dataType = samplerArray[index].dataType;
+	var streamType = samplerArray[index].streamType;
+	if(dataType==""){
+		dataType = lslWrapper.getStreamDataTypeSync(streamType); //non-blocking call, one time only
+		samplerArray[index].dataType = dataType;
+	}
+	if(dataType.substr(0,3)!="ERR"){//if no ERR returned		
+		if(dataType==lslWrapper.LSL_TYPE_STRING){				
+				streamStatus[streamType].obj.readStringStreamAsync(function(err,sample){//async call
+				if(err){
+					eventEmitter.emit('readError',err);
+				}
+				else{
+					var data = {"streamType":streamType,"dataType":dataType,"sample":sample,"source":streamStatus[streamType].sourceId,"name":streamStatus[streamType].sourceName};
+					processSample(data);					
+					despatchEvent(data);	
+				}
+			});
+		}
+		else{
+			if(dataType==lslWrapper.LSL_TYPE_FLOAT){
+				//console.log("DEBUG: Reading floats",streamStatus[streamType]);
+				var res = streamStatus[streamType].obj.readFloatStreamAsync( function(err,sample){
+					if(err){
+						eventEmitter.emit('readError',err);
+					}
+					else{
+						var data = {"streamType":streamType,"dataType":dataType,"sample":sample,"source":streamStatus[streamType].sourceId,"name":streamStatus[streamType].sourceName, "index":index};				
+						processSample(data);					
+						return despatchEvent(data);
+					}
+				});	
+			}	
+			else{
+				console.log("ERR: Unknown datatype encountered in readSamples", dataType);
+			}
+		}			
+	}
+	else{//if ERR returned, show it and reject promise
+		eventEmitter.emit('readError',dataType);			
+	}
+}
+var emittedEvtCnt = 0;
+function despatchEvent(data){
+	if(streamStatus[data.streamType].continueStream){
+		//console.log("DEBUG: samplerPromise CALL RECURSE", lslWrapper.getStreamNameSync(data.streamType));
+		if (++emittedEvtCnt % 500 === 0) {			
+			var mem = process.memoryUsage();//var mem = process.memoryUsage();
+			console.log("DEBUG: DEVT Program is using mem.rss: ( "+mem.rss+") "+ byteSize(mem.rss) + " : mem.heapTotal: " + byteSize(mem.heapTotal) + " : mem.heapUsed: " + byteSize(mem.heapUsed) +" bytes of Heap.");	
+			if(mem.rss>500000000) process.exit(0);
+		}
+		eventEmitter.emit("continueSampling",data.index+0);
+		return 0;
+	}
+	else{				
+		//console.log("DEBUG: samplerPromise THEN EXIT");
+		var result = streamStatus[data.streamType].obj.closeInletStreamSync();
+			//console.log(result);
+		streamStatus[data.streamType].started=false;
+	}	
+}
+
+var samplerExit=0;
+var samplerThen=0;
 function readSamples(streamType, dataType){
-	//console.log("DEBUG: ",streamType, dataType);
+	console.log("DEBUG: SHORTED FUNCTION",streamType, dataType);
+	return;
 	var samplerPromise = new Promise(function(resolve,reject){
-		//console.log("DEBUG: ReadSamples.Promise", streamType, dataType);
-		if(dataType=="") dataType = lslWrapper.getStreamDataTypeSync(streamType);
-		if(dataType.substr(0,3)!="ERR"){
+		if(dataType=="") dataType = lslWrapper.getStreamDataTypeSync(streamType); //non-blocking call, one time only
+		if(dataType.substr(0,3)!="ERR"){//if no ERR returned		
 			if(dataType==lslWrapper.LSL_TYPE_STRING){				
-				streamStatus[streamType].obj.readStringStreamAsync( function(err,sample){
+				streamStatus[streamType].obj.readStringStreamAsync( function(err,sample){//async call
 					if(err){
 						reject(err);
 					}
@@ -382,12 +501,10 @@ function readSamples(streamType, dataType){
 				if(dataType==lslWrapper.LSL_TYPE_FLOAT){
 					//console.log("DEBUG: Reading floats",streamStatus[streamType]);
 					var res = streamStatus[streamType].obj.readFloatStreamAsync( function(err,sample){
-						//console.log("DEBUG: ASYN READ",err, sample);
 						if(err){
 							reject(err);
 						}
 						else{
-							//console.log("DEBUG: ASYN READ","Resolve" );
 							resolve({"streamType":streamType,"dataType":dataType,"sample":sample,"source":streamStatus[streamType].sourceId,"name":streamStatus[streamType].sourceName});				
 						}
 					});	
@@ -397,17 +514,31 @@ function readSamples(streamType, dataType){
 				}
 			}			
 		}
-		else{
+		else{//if ERR returned, show it and reject promise
 			reject(dataType);			
 		}
 	});
 	samplerPromise.then(
 		function(data) {//
-			//console.log("DEBUG: samplerPromise THEN", data,streamStatus[data.streamType].continueStream);
-			processSample(data);//,data.streamType,streamStatus[data.streamType].continueStream);			
+			processSample(data);//,data.streamType,streamStatus[data.streamType].continueStream);
+			//var dst = {"streamType":data.streamType+"","dataType":data.dataType+""};
 			if(streamStatus[data.streamType].continueStream){
 				//console.log("DEBUG: samplerPromise CALL RECURSE", lslWrapper.getStreamNameSync(data.streamType));
-				readSamples(data.streamType,data.dataType);
+				if (++samplerCallCnt % 5000 === 0) {
+					
+					var mem = process.memoryUsage();//var mem = process.memoryUsage();
+					console.log("DEBUG: Program is using mem.rss: (" + mem.rss + "), "+byteSize(mem.rss) + " : mem.heapTotal: " + byteSize(mem.heapTotal) + " : mem.heapUsed: " + byteSize(mem.heapUsed) +" bytes of Heap.");
+					
+					//console.log("DEBUG: Aborting current strand");
+					//global.gc();
+					eventEmitter.emit("restart",data);
+					return 0;
+					//scheduleNextTick(data);
+					//return process.nextTick(function(){readSamples(data.streamType,data.dataType)});
+				}
+				else{
+					return readSamples(data.streamType,data.dataType);
+				}				
 			}
 			else{				
 				//console.log("DEBUG: samplerPromise THEN EXIT");
@@ -426,25 +557,33 @@ function readSamples(streamType, dataType){
 			process.exit();
 		}
 	);
+	//return samplerPromise;
+	if((++samplerExit)%1000==0)
+		console.log("DEBUG: Readsamples Exit",(samplerExit));
+	//return null;
 }
+
 
 function processSample(data){//log, record, broadcast, decide closure
 	//log
-	var logCheck = {"div":1,"idx":-1,"str":""};//str = data.sample.join(", ");
-	switch(streamStatus[data.streamType].sourceName){
-		case "EEG":
-			logCheck.div = 250; logCheck.idx = 0; break;
-		case "Markers":
-			logCheck.div = 1;   logCheck.idx = 2; break;
-		case "Quality":
-			logCheck.div = 2;   logCheck.idx = 1; break;
-		default:
-			console.log("Unknown stream type:",streamStatus[data.streamType].sourceName);
+	if(verboseLog){
+		var logCheck = {"div":1,"idx":-1,"str":""};//str = data.sample.join(", ");
+		switch(streamStatus[data.streamType].sourceName){
+			case "EEG":
+				logCheck.div = 2500; logCheck.idx = 0; break;
+			case "Markers":
+				logCheck.div = 1;   logCheck.idx = 2; break;
+			case "Quality":
+				logCheck.div = 2;   logCheck.idx = 1; break;
+			default:
+				console.log("Unknown stream type:",streamStatus[data.streamType].sourceName);
+		}
+		if(itrCntr[logCheck.idx]%logCheck.div==0){//avoid blur scroll
+			console.log("INFO:",streamStatus[data.streamType].sourceName,"->",itrCntr[logCheck.idx],"->","[",data.sample.join(", "),"]");
+		}
+		itrCntr[logCheck.idx]++;
 	}
-	if(itrCntr[logCheck.idx]%logCheck.div==0){//avoid blur scroll
-		console.log("INFO:",streamStatus[data.streamType].sourceName,"->",itrCntr[logCheck.idx],"->","[",data.sample.join(", "),"]");
-	}
-	itrCntr[logCheck.idx]++;
+	
 	//record 
 	if(recorderObj.record[data.streamType]) //if the record flag is set, write to file
 		recordData(data);
@@ -453,10 +592,17 @@ function processSample(data){//log, record, broadcast, decide closure
 	broadCast(data); //send it to the connected WS clients
 	
 	//decide closure, in case we just want to verify operation, once closed, restart is required
-	if(itrCntr[logCheck.idx]>5000 && abortN){//set abortN to false and inlet stream is never closed till application is alive
-		streamStatus[data.streamType].continueStream = false;
-		console.log("INFO: Closing", data.streamType, lslWrapper.getStreamNameSync(data.streamType));
-		console.log("INFO: Restart the Node app to resume inlet stream read");
+	if(verboseLog){
+		if(typeof(logCheck)==="undefined") console.log("ERR: Logcheck not defined");
+		else{console.log("DBG:logcheck", logCheck);}
+		if(itrCntr[logCheck.idx]>5000 && abortN){//set abortN to false and inlet stream is never closed till application is alive
+			streamStatus[data.streamType].continueStream = false;
+			console.log("INFO: Closing", data.streamType, lslWrapper.getStreamNameSync(data.streamType));
+			console.log("INFO: Restart the Node app to resume inlet stream read");
+		}
+	}
+	else{
+		console.log("nonverbose log");
 	}
 }
 
@@ -497,4 +643,24 @@ function getIP(){
 		});
 	});
 	console.log("INFO: Serving on host:",ip[0]+":"+HTTPPORT);
+}
+
+function validateNum(input, min, max) {
+    var num = +input;
+    return num >= min && num <= max && input === num.toString();
+}
+
+function byteSize(bytes){
+	var fileSize;
+	if(bytes<1024){ fileSize = bytes + " bytes"; }
+	else{
+		if(bytes<1024*1024){ fileSize = (Math.floor(bytes/(1024) * 100) / 100)  + " KB"; }
+		else{
+			if(bytes<1024*1024*1024){ fileSize = (Math.floor(bytes/(1024*1024) * 100) / 100)  + " MB"; }
+			else{ 
+				fileSize = (Math.floor(bytes/(1024*1024*1024) * 100) / 100)+ " GB";//  "1GB+. Are you out of your fucking gord?"; 
+			}
+		}
+	}
+	return fileSize;
 }
